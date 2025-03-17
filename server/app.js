@@ -4,114 +4,82 @@ const express = require('express');
 const cors = require('cors');
 
 const PORT = process.env.SECONDARY_PUBLIC_PORT || 8000;
-
 const app = express();
 
-// Custom middleware function to log requests and response status
-const logRequests = (req, res, next) => {
-    const startTime = new Date();
-
-    // Capture the end function to get the response status
-    const end = res.end;
-    res.end = function (chunk, encoding) {
-        res.end = end;
-        const endTime = new Date();
-        const duration = endTime - startTime;
-
-        console.log(
-            `[${endTime.toISOString()}] ${req.method} ${req.url} - ${res.statusCode
-            } - ${duration}ms`
-        );
-
-        // Call the original end function to complete the response
-        res.end(chunk, encoding);
-    };
-
-    next();
-};
-
-// Use the middleware for all routes
-app.use(logRequests);
+// Middleware
 app.use(cors());
 app.use(express.json());
 
-const loadData = (key) => {
+// Load Data from db.json
+const loadData = () => {
     try {
         const dbPath = path.resolve(__dirname, 'db.json');
         const dataBuffer = fs.readFileSync(dbPath);
-        const dataJSON = dataBuffer.toString();
-        const data = JSON.parse(dataJSON);
-        return key ? data[key] : data;
+        return JSON.parse(dataBuffer.toString());
     } catch (e) {
-        return {};
+        return { doors: [] };
     }
 };
 
-const saveData = (key, data) => {
+// Save Data to db.json
+const saveData = (data) => {
     try {
         const dbPath = path.resolve(__dirname, 'db.json');
-        const existingData = loadData();
-        const newData = { ...existingData, [key]: data };
-        const dataJSON = JSON.stringify(newData, null, 2);
-        fs.writeFileSync(dbPath, dataJSON);
-        return data;
+        fs.writeFileSync(dbPath, JSON.stringify(data, null, 2));
     } catch (e) {
-        return {};
+        console.error('Error saving data:', e);
     }
 };
 
+// Get all doors
 app.get('/doors', (_, res) => {
-    const doorsData = loadData('doors');
-    res.json(doorsData);
+    const data = loadData();
+    res.json(data.doors);
 });
 
+// Get door by ID
 app.get('/doors/:id', (req, res) => {
-    const doorsData = loadData('doors');
-    const door = doorsData.find((door) => door.id === req.params.id);
-    if (door) {
-        return res.json(door);
-    }
-
-    res.status(404).json({ message: 'Door not found' });
+    const data = loadData();
+    const door = data.doors.find((d) => d.id === req.params.id);
+    door ? res.json(door) : res.status(404).json({ message: 'Door not found' });
 });
 
+// Add new door
 app.post('/doors', (req, res) => {
-    const doorsData = loadData('doors');
-    const newDoor = { id: (doorsData.length + 1).toString(), ...req.body };
-    doorsData.push(newDoor);
-    saveData('doors', doorsData);
-    res.status(200).json(newDoor);
+    const data = loadData();
+    const newDoor = { id: (data.doors.length + 1).toString(), ...req.body };
+    data.doors.push(newDoor);
+    saveData(data);
+    res.status(201).json(newDoor);
 });
 
+// Update door
 app.put('/doors/:id', (req, res) => {
-    const doorsData = loadData('doors');
-    const doorIndex = doorsData.findIndex((door) => door.id === req.params.id);
-
-    // dont allow to update 'id' field
-    delete req.body.id;
-
-    if (doorIndex !== -1) {
-        doorsData[doorIndex] = { ...doorsData[doorIndex], ...req.body };
-        saveData('doors', doorsData);
-        return res.status(200).json(doorsData[doorIndex]);
+    const data = loadData();
+    const index = data.doors.findIndex((d) => d.id === req.params.id);
+    
+    if (index !== -1) {
+        data.doors[index] = { ...data.doors[index], ...req.body };
+        saveData(data);
+        res.json(data.doors[index]);
+    } else {
+        res.status(404).json({ message: 'Door not found' });
     }
-
-    res.status(404).json({ message: 'Door not found' });
 });
 
+// Delete door
 app.delete('/doors/:id', (req, res) => {
-    const doorsData = loadData('doors');
-    const doorIndex = doorsData.findIndex((door) => door.id === req.params.id);
-    if (doorIndex !== -1) {
-        const deletedDoor = doorsData[doorIndex];
-        doorsData.splice(doorIndex, 1);
-        saveData('doors', doorsData);
-        return res.status(200).json(deletedDoor);
+    const data = loadData();
+    const index = data.doors.findIndex((d) => d.id === req.params.id);
+
+    if (index !== -1) {
+        const deletedDoor = data.doors.splice(index, 1);
+        saveData(data);
+        res.json(deletedDoor);
+    } else {
+        res.status(404).json({ message: 'Door not found' });
     }
-
-    res.status(404).json({ message: 'Door not found' });
 });
 
-app.listen(PORT, () => {
-    console.log(`🚀 server is running on ${PORT}`);
-});
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+

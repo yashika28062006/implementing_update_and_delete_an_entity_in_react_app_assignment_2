@@ -1,14 +1,56 @@
 {
     "doors": [
-        {
-            "id": "1",
-            "name": "Front Door",
-            "status": "open"
-        },
-        {
-            "id": "2",
-            "name": "Back Door",
-            "status": "closed"
-        }
+      {
+        "id": "1",
+        "name": "Front Door",
+        "status": "open"
+      },
+      {
+        "id": "2",
+        "name": "Back Door",
+        "status": "closed"
+      },
+      {
+        "id": "3",
+        "name": "Garage Door",
+        "status": "closed"
+      },
+      {
+        "id": "4",
+        "name": "Side Door",
+        "status": "open"
+      },
+      {
+        "id": "5",
+        "name": "Basement Door",
+        "status": "closed"
+      },
+      {
+        "id": "6",
+        "name": "Balcony Door",
+        "status": "open"
+      },
+      {
+        "id": "7",
+        "name": "Patio Door",
+        "status": "closed"
+      },
+      {
+        "id": "8",
+        "name": "Office Door",
+        "status": "open"
+      },
+      {
+        "id": "9",
+        "name": "Bedroom Door",
+        "status": "closed"
+      },
+      {
+        "id": "10",
+        "name": "Bathroom Door",
+        "status": "open"
+      }
     ]
-}
+  }
+  
+  
